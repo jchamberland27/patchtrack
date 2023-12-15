@@ -6,6 +6,8 @@ import json
 import os
 import pickledb
 
+import patchtrack_ui as ui
+
 app = Flask(__name__)
 socketio = SocketIO(app)
 
@@ -18,8 +20,7 @@ if db is None:
 @app.route('/')
 def display_ui():
     """Display the UI for the dash."""
-    return "UI Pending", 200
-    #return render_template('index.html')
+    return render_template('index.html')
 
 
 @app.route('/ping')
@@ -44,8 +45,8 @@ def config_init():
     return "INIT OK", 200
 
 
-@app.route('/config/patch_ports')
-def config_patch_ports():
+@app.route('/config/patch_ports/set')
+def config_patch_ports_set():
     """Set number of patch panel ports in config."""
     ports = int(request.args.get('ports'))
     db.dadd("config", ('PORT_COUNT_PATCH', ports))
@@ -53,18 +54,32 @@ def config_patch_ports():
     return "PORT_COUNT_PATCH UPDATE OK", 200
 
 
-@app.route('/config/switch_ports')
-def config_switch_ports():
+@app.route('/config/patch_ports/get')
+def config_patch_ports_get():
+    """Get number of patch panel ports in config."""
+    return str(db.dget("config", "PORT_COUNT_PATCH")), 200
+
+
+@app.route('/config/switch_ports/set')
+def config_switch_ports_set():
     """Set number of switch ports in config."""
     ports = int(request.args.get('ports'))
     db.dadd("config", ('PORT_COUNT_SWITCH', ports))
     db.dump()
     return "PORT_COUNT_SWITCH UPDATE OK", 200
 
+
+@app.route('/config/switch_ports/get')
+def config_switch_ports_get():
+    """Get number of switch ports in config."""
+    return str(db.dget("config", "PORT_COUNT_SWITCH")), 200
+
+
 @app.route('/patch/all_ports')
 def patch_all_ports():
     """Get all patch ports"""
     return json.dumps(db.dgetall("patch")), 200
+
 
 @app.route('/patch/<int:port>/clear')
 def patch_port_clear(port):
@@ -82,7 +97,7 @@ def patch_port_clear(port):
 @app.route('/patch/<int:port>/get')
 def patch_port_get(port):
     """Get a patch port value"""
-    if port > db.dget("config", "PORT_COUNT_PATCH") or port < 1:
+    if port > int(db.dget("config", "PORT_COUNT_PATCH")) or port < 1:
         return "ERROR: PORT OUT OF RANGE", 401
     elif port not in db.dkeys("patch"):
         return "PATCH_PORT_OPEN", 200
@@ -94,9 +109,10 @@ def patch_port_get(port):
 def patch_port_set(port):
     """Set a patch port value"""
     value = request.args.get('value')
-    if value > db.dget("config", "PORT_COUNT_PATCH") or value < 1:
+    if port > db.dget("config", "PORT_COUNT_PATCH") or port < 1:
         return "ERROR: PORT OUT OF RANGE", 401
-    
+    if db.dexists("patch", str(port)):
+        db.dpop("patch", str(port))
     db.dadd("patch", (port, value))
     db.dump()
     
@@ -137,13 +153,19 @@ def switch_port_get(port):
 def switch_port_set(port):
     """Set a switch port value"""
     value = request.args.get('value')
-    if value > db.dget("config", "PORT_COUNT_SWITCH") or value < 1:
+    if port > db.dget("config", "PORT_COUNT_SWITCH") or port < 1:
         return "ERROR: PORT OUT OF RANGE", 401
     
     db.dadd("switch", (port, value))
     db.dump()
     
     return "SWITCH_PORT_SET OK", 200
+
+
+@app.route('/ui/patch_table')
+def ui_patch_table():
+    """Return the data for the patch panel table."""
+    return ui.build_patch_panel(db)
 
 
 #Start app

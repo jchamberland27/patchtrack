@@ -1,0 +1,39 @@
+/* card.css */
+
+.patch-table-width {
+    max-width: 400px;
+    margin: auto; 
+}
+
+.patch-table-header {
+    font-size: 1.2em; /* Adjust the font size as needed */
+    font-weight: bold;
+}
+
+.patch-table-footer {
+    font-size: 1.2em; /* Adjust the font size as needed */
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.patch-table-port-number {
+    font-weight: bold;
+}
+
+.patch-table-settings {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    transform: translateY(5px);
+}
+
+.patch-table-add {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    transform: translateY(5px);
+}
+
+.patch-table-divider-rows {
+    border-bottom: 2px solid #dee2e6;
+}
